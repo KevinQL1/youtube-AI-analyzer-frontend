@@ -29,9 +29,8 @@ export default function App() {
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    // Solo hace scroll si hay más de 1 mensaje (es decir, cuando el usuario interactúa)
     if (messages.length > 1 || loading) {
-      chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      chatEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }
   }, [messages, loading]);
 
@@ -89,7 +88,7 @@ export default function App() {
     } catch (error) {
       setMessages((prev) => [
         ...prev,
-        { sender: 'ai', text: '❌ **Error de conexión:** No se pudo conectar con el servidor backend en `localhost:3000`.' },
+        { sender: 'ai', text: `❌ **Error de conexión:** No se pudo conectar con el servidor backend en \`${API_BASE_URL}\`.` },
       ]);
     } finally {
       setLoading(false);
