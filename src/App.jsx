@@ -85,7 +85,22 @@ export default function App() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'No se pudo sincronizar');
       await loadChannel();
-      showSyncMessage(data.partial ? 'Canal actualizado; Analytics quedo parcial.' : 'Canal actualizado correctamente.');
+      let reachMessage = '';
+      if (reportingAvailable) {
+        try {
+          const reachResponse = await fetch(`${API_BASE_URL}/reporting/sync`, { method: 'POST' });
+          const reachData = await reachResponse.json();
+          if (reachResponse.ok) {
+            await loadReach();
+            reachMessage = reachData.importedRows > 0
+              ? ` También se importaron ${reachData.importedRows} filas de alcance.`
+              : ' El informe de CTR todavía está pendiente de YouTube.';
+          }
+        } catch {
+          reachMessage = ' El alcance todavía no está disponible.';
+        }
+      }
+      showSyncMessage(`${data.partial ? 'Canal actualizado; Analytics quedo parcial.' : 'Canal actualizado correctamente.'}${reachMessage}`);
     } catch (error) {
       showSyncMessage(`No se pudo actualizar: ${error.message}`);
     } finally {
