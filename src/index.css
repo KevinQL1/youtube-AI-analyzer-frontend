@@ -106,6 +106,58 @@ html, body {
   gap: 12px;
 }
 
+.sync-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(129, 140, 248, 0.35);
+  color: #c7d2fe;
+  background: rgba(99, 102, 241, 0.15);
+  padding: 7px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.sync-btn:hover:not(:disabled) { background: rgba(99, 102, 241, 0.28); }
+.sync-btn:disabled { opacity: 0.65; cursor: wait; }
+
+.sync-message {
+  position: absolute;
+  top: 78px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 25;
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: rgba(30, 41, 59, 0.95);
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  color: #cbd5e1;
+  font-size: 0.75rem;
+}
+
+.channel-summary {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  color: #94a3b8;
+  font-size: 0.72rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.channel-summary span:first-child { color: #e2e8f0; font-weight: 600; }
+
+@media (max-width: 700px) {
+  .header { padding: 0 14px; }
+  .header-status span:last-child { display: none; }
+  .sync-btn span { display: none; }
+  .channel-summary { overflow-x: auto; justify-content: flex-start; white-space: nowrap; }
+}
+
 .header-status {
   display: flex;
   align-items: center;

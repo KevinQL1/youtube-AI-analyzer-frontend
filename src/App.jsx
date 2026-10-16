@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -13,7 +13,7 @@ const SUGGESTED_QUESTIONS = [
   "¿Cuál es mi mejor playlist en cuanto a vistas y retención?",
 ];
 
-const API_BASE_URL = "https://youtube-ai-analyzer-backend.onrender.com/api";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "https://youtube-ai-analyzer-backend.onrender.com/api").replace(/\/$/, '');
 
 export default function App() {
   const [messages, setMessages] = useState([
@@ -26,7 +26,42 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [expandedSql, setExpandedSql] = useState({});
   const [copiedIndex, setCopiedIndex] = useState(null);
+  const [channel, setChannel] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState('');
   const chatEndRef = useRef(null);
+
+  const loadChannel = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/channel`);
+      if (response.ok) setChannel(await response.json());
+    } catch {
+      setChannel(null);
+    }
+  };
+
+  useEffect(() => {
+    // El canal se carga una vez al montar la aplicacion para mostrar el contexto actual.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadChannel();
+  }, []);
+
+  const handleSync = async () => {
+    if (syncing) return;
+    setSyncing(true);
+    setSyncMessage('Actualizando datos de YouTube...');
+    try {
+      const response = await fetch(`${API_BASE_URL}/sync`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'No se pudo sincronizar');
+      await loadChannel();
+      setSyncMessage(data.partial ? 'Canal actualizado; Analytics quedo parcial.' : 'Canal actualizado correctamente.');
+    } catch (error) {
+      setSyncMessage(`No se pudo actualizar: ${error.message}`);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   useEffect(() => {
     if (messages.length > 1 || loading) {
@@ -85,7 +120,7 @@ export default function App() {
           { sender: 'ai', text: `⚠️ **Error en la consulta:** ${data.error || 'No se pudo procesar la pregunta.'}` },
         ]);
       }
-    } catch (error) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         { sender: 'ai', text: `❌ **Error de conexión:** No se pudo conectar con el servidor backend en \`${API_BASE_URL}\`.` },
@@ -125,14 +160,29 @@ export default function App() {
           <div className="header-status">
             <Database size={13} className="status-icon" />
             <span className="status-dot"></span>
-            <span>PostgreSQL Conectado</span>
+            <span>{channel ? `${Number(channel.subscribers || 0).toLocaleString()} suscriptores` : 'Conectando al canal...'}</span>
           </div>
+
+          <button onClick={handleSync} className="sync-btn" disabled={syncing} title="Actualizar datos de YouTube">
+            <RefreshCw size={15} className={syncing ? 'spinner' : ''} />
+            <span>{syncing ? 'Actualizando' : 'Actualizar'}</span>
+          </button>
 
           <button onClick={handleResetChat} className="reset-btn" title="Limpiar conversación">
             <RefreshCw size={15} />
           </button>
         </div>
       </header>
+
+      {syncMessage && <div className="sync-message">{syncMessage}</div>}
+      {channel && (
+        <div className="channel-summary">
+          <span>{channel.title}</span>
+          <span>{Number(channel.total_views || 0).toLocaleString()} vistas</span>
+          <span>{Number(channel.total_videos || 0).toLocaleString()} videos</span>
+          <span>Actualizado {new Date(channel.updated_at).toLocaleDateString()}</span>
+        </div>
+      )}
 
       {/* ÁREA DEL CHAT */}
       <main className="chat-area">
