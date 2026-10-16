@@ -30,6 +30,7 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
   const chatEndRef = useRef(null);
+  const inputRef = useRef(null);
 
   const loadChannel = async () => {
     try {
@@ -92,6 +93,7 @@ export default function App() {
     if (!questionText.trim() || loading) return;
 
     setInput('');
+    if (inputRef.current) inputRef.current.style.height = 'auto';
     setMessages((prev) => [...prev, { sender: 'user', text: questionText }]);
     setLoading(true);
 
@@ -133,6 +135,19 @@ export default function App() {
   const handleSubmit = (e) => {
     e.preventDefault();
     handleAsk(input);
+  };
+
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 150)}px`;
+  };
+
+  const handleInputKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
+    }
   };
 
   return (
@@ -272,11 +287,13 @@ export default function App() {
         )}
 
         <form onSubmit={handleSubmit} className="input-form">
-          <input
-            type="text"
+          <textarea
+            ref={inputRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Pregunta sobre retención, Shorts, virales o rendimiento por etiquetas..."
+            onChange={handleInputChange}
+            onKeyDown={handleInputKeyDown}
+            rows={1}
+            placeholder="Escribe tu pregunta sobre el canal..."
             className="chat-input"
             disabled={loading}
           />
