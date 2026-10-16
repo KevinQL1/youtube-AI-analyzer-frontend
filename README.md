@@ -83,3 +83,19 @@ El backend debe permitir en CORS el dominio final de Vercel.
 ## Uso recomendado
 
 YouTube Studio sigue siendo el lugar para publicar videos y consultar todas las metricas oficiales. Esta interfaz se usa para preguntarle al agente por que ocurren los resultados, que contenido crear y que acciones priorizar.
+
+### Reporting API: impresiones y CTR
+
+El frontend detecta los endpoints de alcance del backend y muestra un boton **CTR** cuando estan disponibles:
+
+- `GET /api/reporting/status`: consulta si existe el job y si ya hay informes.
+- `POST /api/reporting/setup`: prepara el job de alcance.
+- `POST /api/reporting/sync`: importa los informes diarios disponibles.
+
+El boton **Actualizar** sincroniza videos y Analytics y despues intenta importar tambien los informes de impresiones y CTR. Si YouTube todavia no ha generado el primer informe, se muestra un mensaje de pendiente y el chat sigue funcionando con las metricas disponibles.
+
+Los informes de alcance pueden tardar hasta 24 horas en aparecer. El frontend no considera ese estado como un error.
+
+### Datos disponibles en el chat
+
+El agente recibe el resumen del canal, fechas reales en zona horaria de Bogota, videos publicados/programados, Shorts, videos largos, retencion, tiempo visto, suscriptores ganados/perdidos, fuentes de trafico y demografia cuando YouTube las entrega. Cuando existan informes de Reporting API tambien recibe impresiones y CTR.
