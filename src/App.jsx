@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
   Send, User, Loader2, Sparkles, Video,
-  ChevronDown, ChevronUp, Code2, Flame, Copy, Check, RefreshCw, Database
+  ChevronDown, ChevronUp, Code2, Flame, Copy, Check, RefreshCw, Database, BarChart3
 } from 'lucide-react';
 
 const SUGGESTED_QUESTIONS = [
@@ -29,6 +29,9 @@ export default function App() {
   const [channel, setChannel] = useState(null);
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState('');
+  const [reach, setReach] = useState(null);
+  const [reportingAvailable, setReportingAvailable] = useState(false);
+  const [reportingSyncing, setReportingSyncing] = useState(false);
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
   const syncMessageTimerRef = useRef(null);
@@ -51,10 +54,26 @@ export default function App() {
     }
   };
 
+  const loadReach = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/reporting/status`);
+      if (!response.ok) {
+        setReportingAvailable(false);
+        return;
+      }
+      const data = await response.json();
+      setReportingAvailable(true);
+      setReach(data.reach || null);
+    } catch {
+      setReportingAvailable(false);
+    }
+  };
+
   useEffect(() => {
     // El canal se carga una vez al montar la aplicacion para mostrar el contexto actual.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     loadChannel();
+    loadReach();
   }, []);
 
   const handleSync = async () => {
@@ -71,6 +90,28 @@ export default function App() {
       showSyncMessage(`No se pudo actualizar: ${error.message}`);
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const handleReportingSync = async () => {
+    if (reportingSyncing) return;
+    setReportingSyncing(true);
+    showSyncMessage('Comprobando informes de impresiones y CTR...');
+    try {
+      const setupResponse = await fetch(`${API_BASE_URL}/reporting/setup`, { method: 'POST' });
+      const setupData = await setupResponse.json();
+      if (!setupResponse.ok) throw new Error(setupData.error || 'Reporting API no disponible');
+      const syncResponse = await fetch(`${API_BASE_URL}/reporting/sync`, { method: 'POST' });
+      const syncData = await syncResponse.json();
+      if (!syncResponse.ok) throw new Error(syncData.error || 'No se pudieron importar los informes');
+      await loadReach();
+      showSyncMessage(syncData.importedRows > 0
+        ? `Alcance actualizado: ${syncData.importedRows} filas importadas.`
+        : 'Job de alcance activo; YouTube aún no ha generado informes.');
+    } catch (error) {
+      showSyncMessage(`No se pudo actualizar el alcance: ${error.message}`);
+    } finally {
+      setReportingSyncing(false);
     }
   };
 
@@ -193,6 +234,13 @@ export default function App() {
             <span>{syncing ? 'Actualizando' : 'Actualizar'}</span>
           </button>
 
+          {reportingAvailable && (
+            <button onClick={handleReportingSync} className="sync-btn reporting-btn" disabled={reportingSyncing} title="Actualizar impresiones y CTR">
+              <BarChart3 size={15} className={reportingSyncing ? 'spinner' : ''} />
+              <span>{reportingSyncing ? 'Alcance' : 'CTR'}</span>
+            </button>
+          )}
+
           <button onClick={handleResetChat} className="reset-btn" title="Limpiar conversación">
             <RefreshCw size={15} />
           </button>
@@ -206,6 +254,7 @@ export default function App() {
           <span>{Number(channel.total_views || 0).toLocaleString()} vistas</span>
           <span>{Number(channel.total_videos || 0).toLocaleString()} videos</span>
           <span>Actualizado {new Date(channel.updated_at).toLocaleDateString()}</span>
+          {reportingAvailable && <span className="reach-summary"><BarChart3 size={13} /> {reach?.rows ? `${Number(reach.impressions || 0).toLocaleString()} impresiones` : 'CTR pendiente'}</span>}
         </div>
       )}
 

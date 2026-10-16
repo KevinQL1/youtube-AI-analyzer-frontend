@@ -669,3 +669,14 @@ html, body {
 
 .markdown-body a { color: #93c5fd; }
 .markdown-body a:hover { color: #bfdbfe; }
+
+.reporting-btn {
+  border-color: rgba(45, 212, 191, 0.24);
+}
+
+.reach-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #a5f3fc;
+}
