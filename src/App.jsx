@@ -31,6 +31,16 @@ export default function App() {
   const [syncMessage, setSyncMessage] = useState('');
   const chatEndRef = useRef(null);
   const inputRef = useRef(null);
+  const syncMessageTimerRef = useRef(null);
+
+  const showSyncMessage = (message) => {
+    if (syncMessageTimerRef.current) clearTimeout(syncMessageTimerRef.current);
+    setSyncMessage(message);
+    syncMessageTimerRef.current = setTimeout(() => {
+      setSyncMessage('');
+      syncMessageTimerRef.current = null;
+    }, 5000);
+  };
 
   const loadChannel = async () => {
     try {
@@ -56,9 +66,9 @@ export default function App() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'No se pudo sincronizar');
       await loadChannel();
-      setSyncMessage(data.partial ? 'Canal actualizado; Analytics quedo parcial.' : 'Canal actualizado correctamente.');
+      showSyncMessage(data.partial ? 'Canal actualizado; Analytics quedo parcial.' : 'Canal actualizado correctamente.');
     } catch (error) {
-      setSyncMessage(`No se pudo actualizar: ${error.message}`);
+      showSyncMessage(`No se pudo actualizar: ${error.message}`);
     } finally {
       setSyncing(false);
     }
