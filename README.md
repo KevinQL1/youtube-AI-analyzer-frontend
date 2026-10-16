@@ -33,11 +33,13 @@ npm install
 npm run dev
 ```
 
-Para cambiar la URL del backend crea `.env` en la raiz del frontend:
+Para desarrollo local, crea `.env` en la raiz del frontend. El archivo ya esta preparado en este proyecto y no se sube al repositorio:
 
 ```env
 VITE_API_BASE_URL=https://youtube-ai-analyzer-backend.onrender.com/api
 ```
+
+Tambien existe `.env.example` como plantilla para nuevas instalaciones. Copialo como `.env` y ajusta la URL si utilizas otro backend.
 
 La variable debe configurarse tambien en Vercel en **Settings > Environment Variables**. Despues de modificarla, crea un nuevo deployment.
 
